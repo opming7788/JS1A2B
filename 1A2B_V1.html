@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1A2B 猜數字遊戲</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="overlay hidden"></div>
+    <div class="container">
+      <h1>1A2B猜數字遊戲</h1>
+
+      <div class="controls">
+        <button id="start-btn">開始</button>
+        <button id="giveup-btn">放棄重來</button>
+        <button id="reveal-btn">看答案</button>
+      </div>
+
+      <div id="input-area">
+        <input type="text" id="guess-input" placeholder="猜數字" />
+        <!-- maxlength="4" -->
+        <button id="submit-btn">猜！</button>
+      </div>
+
+      <div class="Hint">
+        <div class="HintText">
+          Hint
+          <span class="HintClosed">✖</span>
+        </div>
+        <hr />
+        <div class="innerText">請按開始按鈕</div>
+      </div>
+
+      <div class="GameStop">
+        <div class="GameStopHint">過關</div>
+        <hr />
+        <div class="GameStopText">恭喜過關!</div>
+        <hr />
+        <div class="btnCollector">
+          <button class="reStartBtn visible" id="BtnFun">來點刺激</button>
+          <button class="reStartBtn" id="BtnRestart">重新開始</button>
+        </div>
+      </div>
+
+      <div class="CountDown">
+        <div class="CountDownHint">距離那美克星爆炸還剩:</div>
+        <hr />
+        <div class="timerCount">計時開始</div>
+      </div>
+    </div>
+    <script>
+      const startBtn = document.querySelector("#start-btn");
+      const giveupBtn = document.querySelector("#giveup-btn");
+      const revealBtn = document.querySelector("#reveal-btn");
+      const submitBtn = document.querySelector("#submit-btn");
+      const guessInput = document.querySelector("#guess-input");
+      const container = document.querySelector(".container");
+      const HintClosed = document.querySelector(".HintClosed");
+      const Hint = document.querySelector(".Hint");
+
+      let rand4Num = [];
+
+      const HintManager = {
+        hintElement: document.querySelector(".Hint"),
+        hintCloseButton: document.querySelector(".HintClosed"),
+        gameStopHint: document.querySelector(".GameStop"),
+        BtnRestart: document.querySelector("#BtnRestart"),
+        Overlay: document.querySelector(".overlay.hidden"),
+        CountDown: document.querySelector(".CountDown"),
+
+        timerElement: document.querySelector(".timerCount"), // 定位倒計時的元素
+        timerInterval: null, // 用於存儲計時器ID
+
+        showHint(message, autoCloseTime = null) {
+          const innerText = this.hintElement.querySelector(".innerText");
+          if (message) {
+            innerText.textContent = message; // 設置自訂義message
+          }
+
+          this.hintElement.style.display = "flex"; // 顯示Hint
+
+          // 如果設置了自動關閉時間，則讓Hint顯示autoCloseTime時間
+          if (autoCloseTime) {
+            setTimeout(() => {
+              this.hideHint();
+            }, autoCloseTime);
+          }
+        },
+
+        hideHint() {
+          this.hintElement.style.display = "none"; // 隱藏 Hint
+        },
+
+        // 顯示GameStopHint
+        showGameStopHint(message) {
+          this.gameStopHint.style.display = "flex";
+          this.Overlay.classList.remove("hidden");
+          if (message) {
+            this.gameStopHint.querySelector(".GameStopHint").textContent =
+              "失敗";
+            this.gameStopHint.querySelector(".GameStopText").textContent =
+              "你真可悲";
+          }
+          const Input = document.querySelector("#guess-input");
+          Input.blur();
+        },
+        hideGameStopHint() {
+          this.gameStopHint.style.display = "none";
+        },
+
+        showCountDownHint() {
+          this.CountDown.style.display = "flex";
+          this.timerElement.textContent = "計時開始";
+          this.startCountDown(5);
+        },
+
+        hideCountDownHint() {
+          this.CountDown.style.display = "none";
+          if (this.timerInterval) {
+            clearInterval(this.timerInterval); // 停止計時
+          }
+        },
+        startCountDown(minutes) {
+          let remainingTime = minutes * 60; // 將分鐘轉換為秒
+
+          // 定義倒數計時更新邏輯
+          this.timerInterval = setInterval(() => {
+            const mins = Math.floor(remainingTime / 60);
+            const secs = remainingTime % 60;
+
+            // 更新頁面上的倒數計時
+            this.timerElement.textContent = `${mins}:${
+              secs < 10 ? "0" + secs : secs
+            }`;
+
+            // 如果時間到，停止計時器
+            if (remainingTime <= 0) {
+              this.timerElement.textContent = "爆炸！"; // 倒數計時結束顯示爆炸
+              clearInterval(this.timerInterval);
+              // this.hideCountDownHint();
+              this.showGameStopHint("你真可悲!!!!");
+            }
+
+            remainingTime--; // 每秒減少剩餘時間一秒
+          }, 1000); // 每秒執行一次
+        },
+
+        bindEvents() {
+          // 綁定關閉按鈕的點擊事件
+          this.hintCloseButton.addEventListener("click", () => {
+            this.hideHint();
+          });
+
+          this.BtnRestart.addEventListener("click", () => {
+            this.hideGameStopHint();
+            this.Overlay.classList.add("hidden");
+            location.reload(true); // 重新整理網頁，從伺服器抓取
+          });
+        },
+      };
+
+      HintManager.bindEvents();
+
+      function correctSelection() {
+        const start = this.selectionStart;
+
+        const originalLength = this.value.length;
+        // 移除中文字符
+        // this.value = this.value.replace(/[\u4e00-\u9fa5]/g, "");
+        //移除非數字字符
+        this.value = this.value.replace(/\D/g, "");
+        // 計算新的游標位置
+        const newLength = this.value.length;
+        const offset = originalLength - newLength; // 被刪除的字符數量
+        // 恢復游標位置
+        this.setSelectionRange(start - offset, start - offset);
+      }
+
+      function checkInput() {
+        const errorText = " 不能輸入重複的數字";
+        const fullalertText = " 只能輸入四個數字";
+        // const alphabetAllert = " 請勿輸入非數字";
+
+        if (
+          /[\u4e00-\u9fa5]/.test(guessInput.value) ||
+          /\D/.test(guessInput.value)
+        ) {
+          correctSelection.call(guessInput);
+        }
+
+        const input = guessInput.value;
+        const inputArray = input.split("");
+        const uniqueNumbers = [...new Set(inputArray)];
+
+        // 顯示錯誤消息如果輸入超過 4 個字符
+        if (guessInput.value.length > 4) {
+          if (/[\u4e00-\u9fa5]/.test(guessInput.value)) {
+            //如果有中文
+            guessInput.value = input.slice(0, 4);
+            return;
+          }
+          guessInput.value = input.slice(0, 4) + " " + fullalertText; // 限制最多四個字符
+        } else {
+          if (inputArray.length !== uniqueNumbers.length) {
+            const originalValue = uniqueNumbers.join("");
+            guessInput.value = originalValue + errorText;
+            return;
+          }
+        }
+      }
+
+      function check_nAmB() {
+        if (guessInput.value.length === 4) {
+          let A = 0;
+          let B = 0;
+          let inputVal = guessInput.value.split("").map(Number);
+          //   rand4Num
+          for (let i = 0; i < inputVal.length; i++) {
+            for (let j = 0; j < rand4Num.length; j++) {
+              if (inputVal[i] === rand4Num[j] && i === j) {
+                A++;
+              } else if (inputVal[i] === rand4Num[j] && i !== j) {
+                B++;
+              }
+            }
+          }
+
+          console.log("A:", A, "B:", B);
+          guessInput.focus();
+          return [A, B];
+        } else {
+          guessInput.value = "請輸入四個正整數字";
+
+          guessInput.focus(); // input視窗focus
+          return null;
+        }
+      }
+
+      // 紀錄遊戲玩耍過程
+      function Recording_nAmB() {
+        let result = check_nAmB();
+        if (!result) {
+          return;
+        }
+
+        let [A, B] = result;
+        const newDivList = document.createElement("div");
+        const newDiv_RecdText = document.createElement("div");
+        const newDiv_nAmB = document.createElement("div");
+        newDivList.classList.add("result-area");
+        newDiv_nAmB.classList.add("nAmB");
+        newDiv_RecdText.classList.add("recordingText");
+
+        newDiv_nAmB.textContent = `${A}A${B}B`;
+        newDiv_RecdText.textContent = guessInput.value;
+        newDivList.appendChild(newDiv_nAmB);
+        newDivList.appendChild(newDiv_RecdText);
+        container.appendChild(newDivList);
+        guessInput.value = "";
+
+        if (A === 4) {
+          HintManager.showGameStopHint(); //猜對了顯示遊戲結束視窗
+          HintManager.hideCountDownHint();
+        }
+      }
+
+      // 當頁面載入時，放棄按紐和看答案按鈕已禁用
+      giveupBtn.disabled = true;
+      revealBtn.disabled = true;
+      submitBtn.disabled = true;
+      guessInput.disabled = true;
+
+      // 點擊startBtn按鈕後，啟用其他按鈕
+      startBtn.addEventListener("click", () => {
+        giveupBtn.disabled = false;
+        revealBtn.disabled = false;
+        startBtn.disabled = true;
+        submitBtn.disabled = false;
+        guessInput.disabled = false;
+
+        const myset = new Set(); // 定義set集合，用來隨機抽取整數時刪除重複數字
+
+        while (myset.size < 4) {
+          const randInt = Math.floor(Math.random() * 10);
+          myset.add(randInt);
+        }
+        rand4Num = Array.from(myset);
+        console.log(rand4Num);
+
+        HintManager.showCountDownHint(); //按下開始按紐倒數計時啟動
+      });
+
+      //按下放棄按紐
+      giveupBtn.addEventListener("click", () => {
+        giveupBtn.disabled = true;
+        revealBtn.disabled = true;
+        startBtn.disabled = false;
+        submitBtn.disabled = true;
+        guessInput.disabled = true;
+        const recdList = document.querySelectorAll(".result-area");
+        recdList.forEach((element) => {
+          element.remove(); // 移除當前元素以及其所有子節點
+        });
+        guessInput.value = "";
+
+        HintManager.showHint("請按開始按鈕", 2000); //顯示提示2秒
+        HintManager.hideCountDownHint(); //移除倒數計時
+      });
+
+      //輸入input時會檢查輸入
+      guessInput.addEventListener("input", checkInput);
+
+      // 檢查是否按下 Enter 鍵 (鍵碼 13 或 key 為 "Enter")
+      guessInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault(); // 阻止默認行為，如提交表單
+          submitBtn.click(); // 模擬點擊按鈕
+        }
+      });
+
+      //按下猜
+      submitBtn.addEventListener("click", Recording_nAmB);
+
+      //按下看答案
+      revealBtn.addEventListener("click", () => {
+        let rand4Num_Combined = "";
+        rand4Num.forEach((element) => {
+          rand4Num_Combined += element;
+        });
+
+        HintManager.showHint(rand4Num_Combined, 500); //只顯示0.5秒看答案
+      });
+
+      //   guessInput.addEventListener("input", function () {
+      //     const errorText = " 不能輸入重複的數字";
+      //     const fullalertText = " 只能輸入四個數字";
+      //     const alphabetAllert = " 請勿輸入非數字";
+
+      //     if (/[\u4e00-\u9fa5]/.test(this.value) || /\D/.test(this.value)) {
+      //       correctSelection.call(this);
+      //     }
+
+      //     const input = this.value;
+      //     const inputArray = input.split("");
+      //     const uniqueNumbers = [...new Set(inputArray)];
+
+      //     // 顯示錯誤消息如果輸入超過 4 個字符
+      //     if (this.value.length > 4) {
+      //       if (/[\u4e00-\u9fa5]/.test(this.value)) {
+      //         //如果有中文
+      //         this.value = input.slice(0, 4);
+      //         return;
+      //       }
+      //       this.value = input.slice(0, 4) + " " + fullalertText; // 限制最多四個字符
+      //     } else {
+      //       if (inputArray.length !== uniqueNumbers.length) {
+      //         const originalValue = uniqueNumbers.join("");
+      //         this.value = originalValue + errorText;
+      //         return;
+      //       }
+      //     }
+      //   });
+    </script>
+  </body>
+</html>
