@@ -72,6 +72,27 @@
         timerElement: document.querySelector(".timerCount"), // 定位倒計時的元素
         timerInterval: null, // 用於存儲計時器ID
 
+        createSpark() {
+          let spark = document.createElement("div");
+          spark.classList.add("spark");
+          let randomX = Math.random() * window.innerWidth;
+          let randomY = Math.random() * window.innerHeight;
+          spark.style.left = randomX + "px";
+          spark.style.top = randomY + "px";
+          spark.style.filter = "hue-rotate(" + Math.random() * 360 + "deg)";
+          spark.style.transform = "scale(" + Math.random() * 5 + ")";
+
+          for (var i = 0; i <= 7; i++) {
+            let span = document.createElement("span");
+            span.style.transform = "rotate(" + i * 45 + "deg)";
+            spark.appendChild(span);
+          }
+          document.body.appendChild(spark);
+          setTimeout(function () {
+            spark.remove();
+          }, 3000);
+        },
+
         showHint(message, autoCloseTime = null) {
           const innerText = this.hintElement.querySelector(".innerText");
           if (message) {
@@ -98,9 +119,11 @@
           this.Overlay.classList.remove("hidden");
           if (message) {
             this.gameStopHint.querySelector(".GameStopHint").textContent =
-              "失敗";
+              message;
             this.gameStopHint.querySelector(".GameStopText").textContent =
               "失敗為成功之母";
+          } else {
+            setInterval(this.createSpark, 200); //成功放煙火
           }
           const Input = document.querySelector("#guess-input");
           Input.blur();
@@ -139,7 +162,7 @@
               this.timerElement.textContent = "爆炸！"; // 倒數計時結束顯示爆炸
               clearInterval(this.timerInterval);
               // this.hideCountDownHint();
-              this.showGameStopHint("你真可悲!!!!");
+              this.showGameStopHint("失敗");
             }
 
             remainingTime--; // 每秒減少剩餘時間一秒
