@@ -61,6 +61,7 @@
 
       let rand4Num = [];
 
+      //管理所有跳出視窗提示
       const HintManager = {
         hintElement: document.querySelector(".Hint"),
         hintCloseButton: document.querySelector(".HintClosed"),
@@ -288,20 +289,8 @@
         }
       }
 
-      // 當頁面載入時，放棄按紐和看答案按鈕已禁用
-      giveupBtn.disabled = true;
-      revealBtn.disabled = true;
-      submitBtn.disabled = true;
-      guessInput.disabled = true;
-
-      // 點擊startBtn按鈕後，啟用其他按鈕
-      startBtn.addEventListener("click", () => {
-        giveupBtn.disabled = false;
-        revealBtn.disabled = false;
-        startBtn.disabled = true;
-        submitBtn.disabled = false;
-        guessInput.disabled = false;
-
+      //產生四個不重複的0~9任意整數
+      function Generate4randNum() {
         const myset = new Set(); // 定義set集合，用來隨機抽取整數時刪除重複數字
 
         while (myset.size < 4) {
@@ -310,20 +299,43 @@
         }
         rand4Num = Array.from(myset);
         console.log(rand4Num);
+      }
 
-        HintManager.showCountDownHint(); //按下開始按紐倒數計時啟動
-      });
-
-      //按下放棄按紐
-      giveupBtn.addEventListener("click", () => {
+      //放棄按紐和看答案等按鈕禁用
+      function initGame() {
         giveupBtn.disabled = true;
         revealBtn.disabled = true;
         startBtn.disabled = false;
         submitBtn.disabled = true;
         guessInput.disabled = true;
+      }
+
+      //放棄按紐和看答案等按鈕啟用
+      function startGame() {
+        giveupBtn.disabled = false;
+        revealBtn.disabled = false;
+        startBtn.disabled = true;
+        submitBtn.disabled = false;
+        guessInput.disabled = false;
+      }
+
+      // 當頁面載入時，放棄按紐和看答案按鈕已禁用
+      initGame();
+
+      // 點擊startBtn按鈕後，啟用其他按鈕
+      startBtn.addEventListener("click", () => {
+        startGame();
+
+        Generate4randNum();
+        HintManager.showCountDownHint(); //按下開始按紐倒數計時啟動
+      });
+
+      //按下放棄按紐
+      giveupBtn.addEventListener("click", () => {
+        initGame();
         const recdList = document.querySelectorAll(".result-area");
         recdList.forEach((element) => {
-          element.remove(); // 移除當前元素以及其所有子節點
+          element.remove(); // 移除遊戲玩耍過程紀錄
         });
         guessInput.value = "";
 
