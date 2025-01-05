@@ -62,129 +62,132 @@
       let rand4Num = [];
 
       //管理所有跳出視窗提示
-      const HintManager = {
-        hintElement: document.querySelector(".Hint"),
-        hintCloseButton: document.querySelector(".HintClosed"),
-        gameStopHint: document.querySelector(".GameStop"),
-        BtnRestart: document.querySelector("#BtnRestart"),
-        Overlay: document.querySelector(".overlay.hidden"),
-        CountDown: document.querySelector(".CountDown"),
+      const HintManager = (() => {
+        const manager = {
+          hintElement: document.querySelector(".Hint"),
+          hintCloseButton: document.querySelector(".HintClosed"),
+          gameStopHint: document.querySelector(".GameStop"),
+          BtnRestart: document.querySelector("#BtnRestart"),
+          Overlay: document.querySelector(".overlay.hidden"),
+          CountDown: document.querySelector(".CountDown"),
 
-        timerElement: document.querySelector(".timerCount"), // 定位倒計時的元素
-        timerInterval: null, // 用於存儲計時器ID
+          timerElement: document.querySelector(".timerCount"), // 定位倒計時的元素
+          timerInterval: null, // 用於存儲計時器ID
 
-        createSpark() {
-          let spark = document.createElement("div");
-          spark.classList.add("spark");
-          let randomX = Math.random() * window.innerWidth;
-          let randomY = Math.random() * window.innerHeight;
-          spark.style.left = randomX + "px";
-          spark.style.top = randomY + "px";
-          spark.style.filter = "hue-rotate(" + Math.random() * 360 + "deg)";
-          spark.style.transform = "scale(" + Math.random() * 5 + ")";
+          createSpark() {
+            let spark = document.createElement("div");
+            spark.classList.add("spark");
+            let randomX = Math.random() * window.innerWidth;
+            let randomY = Math.random() * window.innerHeight;
+            spark.style.left = randomX + "px";
+            spark.style.top = randomY + "px";
+            spark.style.filter = "hue-rotate(" + Math.random() * 360 + "deg)";
+            spark.style.transform = "scale(" + Math.random() * 5 + ")";
 
-          for (var i = 0; i <= 7; i++) {
-            let span = document.createElement("span");
-            span.style.transform = "rotate(" + i * 45 + "deg)";
-            spark.appendChild(span);
-          }
-          document.body.appendChild(spark);
-          setTimeout(function () {
-            spark.remove();
-          }, 3000);
-        },
+            for (var i = 0; i <= 7; i++) {
+              let span = document.createElement("span");
+              span.style.transform = "rotate(" + i * 45 + "deg)";
+              spark.appendChild(span);
+            }
+            document.body.appendChild(spark);
+            setTimeout(function () {
+              spark.remove();
+            }, 5000);
+          },
 
-        showHint(message, autoCloseTime = null) {
-          const innerText = this.hintElement.querySelector(".innerText");
-          if (message) {
-            innerText.textContent = message; // 設置自訂義message
-          }
-
-          this.hintElement.style.display = "flex"; // 顯示Hint
-
-          // 如果設置了自動關閉時間，則讓Hint顯示autoCloseTime時間
-          if (autoCloseTime) {
-            setTimeout(() => {
-              this.hideHint();
-            }, autoCloseTime);
-          }
-        },
-
-        hideHint() {
-          this.hintElement.style.display = "none"; // 隱藏 Hint
-        },
-
-        // 顯示GameStopHint
-        showGameStopHint(message) {
-          this.gameStopHint.style.display = "flex";
-          this.Overlay.classList.remove("hidden");
-          if (message) {
-            this.gameStopHint.querySelector(".GameStopHint").textContent =
-              message;
-            this.gameStopHint.querySelector(".GameStopText").textContent =
-              "失敗為成功之母";
-          } else {
-            setInterval(this.createSpark, 200); //成功放煙火
-          }
-          const Input = document.querySelector("#guess-input");
-          Input.blur();
-        },
-        hideGameStopHint() {
-          this.gameStopHint.style.display = "none";
-        },
-
-        showCountDownHint() {
-          this.CountDown.style.display = "flex";
-          this.timerElement.textContent = "計時開始";
-          this.startCountDown(5);
-        },
-
-        hideCountDownHint() {
-          this.CountDown.style.display = "none";
-          if (this.timerInterval) {
-            clearInterval(this.timerInterval); // 停止計時
-          }
-        },
-        startCountDown(minutes) {
-          let remainingTime = minutes * 60; // 將分鐘轉換為秒
-
-          // 定義倒數計時更新邏輯
-          this.timerInterval = setInterval(() => {
-            const mins = Math.floor(remainingTime / 60);
-            const secs = remainingTime % 60;
-
-            // 更新頁面上的倒數計時
-            this.timerElement.textContent = `${mins}:${
-              secs < 10 ? "0" + secs : secs
-            }`;
-
-            // 如果時間到，停止計時器
-            if (remainingTime <= 0) {
-              this.timerElement.textContent = "爆炸！"; // 倒數計時結束顯示爆炸
-              clearInterval(this.timerInterval);
-              // this.hideCountDownHint();
-              this.showGameStopHint("失敗");
+          showHint(message, autoCloseTime = null) {
+            const innerText = this.hintElement.querySelector(".innerText");
+            if (message) {
+              innerText.textContent = message; // 設置自訂義message
             }
 
-            remainingTime--; // 每秒減少剩餘時間一秒
-          }, 1000); // 每秒執行一次
-        },
+            this.hintElement.style.display = "flex"; // 顯示Hint
 
-        bindEvents() {
-          // 綁定關閉按鈕的點擊事件
-          this.hintCloseButton.addEventListener("click", () => {
-            this.hideHint();
-          });
+            // 如果設置了自動關閉時間，則讓Hint顯示autoCloseTime時間
+            if (autoCloseTime) {
+              setTimeout(() => {
+                this.hideHint();
+              }, autoCloseTime);
+            }
+          },
 
-          this.BtnRestart.addEventListener("click", () => {
-            this.hideGameStopHint();
-            this.Overlay.classList.add("hidden");
-            location.reload(true); // 重新整理網頁，從伺服器抓取
-          });
-        },
-      };
+          hideHint() {
+            this.hintElement.style.display = "none"; // 隱藏 Hint
+          },
 
-      HintManager.bindEvents();
+          // 顯示GameStopHint
+          showGameStopHint(message) {
+            this.gameStopHint.style.display = "flex";
+            this.Overlay.classList.remove("hidden");
+            if (message) {
+              this.gameStopHint.querySelector(".GameStopHint").textContent =
+                message;
+              this.gameStopHint.querySelector(".GameStopText").textContent =
+                "失敗為成功之母";
+            } else {
+              setInterval(this.createSpark, 100); //成功放煙火
+            }
+            const Input = document.querySelector("#guess-input");
+            Input.blur();
+          },
+          hideGameStopHint() {
+            this.gameStopHint.style.display = "none";
+          },
+
+          showCountDownHint() {
+            this.CountDown.style.display = "flex";
+            this.timerElement.textContent = "計時開始";
+            this.startCountDown(5);
+          },
+
+          hideCountDownHint() {
+            this.CountDown.style.display = "none";
+            if (this.timerInterval) {
+              clearInterval(this.timerInterval); // 停止計時
+            }
+          },
+          startCountDown(minutes) {
+            let remainingTime = minutes * 60; // 將分鐘轉換為秒
+
+            // 定義倒數計時更新邏輯
+            this.timerInterval = setInterval(() => {
+              const mins = Math.floor(remainingTime / 60);
+              const secs = remainingTime % 60;
+
+              // 更新頁面上的倒數計時
+              this.timerElement.textContent = `${mins}:${
+                secs < 10 ? "0" + secs : secs
+              }`;
+
+              // 如果時間到，停止計時器
+              if (remainingTime <= 0) {
+                this.timerElement.textContent = "爆炸！"; // 倒數計時結束顯示爆炸
+                clearInterval(this.timerInterval);
+                // this.hideCountDownHint();
+                this.showGameStopHint("失敗");
+              }
+
+              remainingTime--; // 每秒減少剩餘時間一秒
+            }, 1000); // 每秒執行一次
+          },
+
+          bindEvents() {
+            // 綁定關閉按鈕的點擊事件
+            this.hintCloseButton.addEventListener("click", () => {
+              this.hideHint();
+            });
+
+            this.BtnRestart.addEventListener("click", () => {
+              this.hideGameStopHint();
+              this.Overlay.classList.add("hidden");
+              location.reload(true); // 重新整理網頁，從伺服器抓取
+            });
+          },
+        };
+
+        manager.bindEvents();
+        return manager;
+      })();
 
       function correctSelection() {
         const start = this.selectionStart;
